@@ -80,7 +80,7 @@ export function EditItemQuantityButton({
 
   return (
     <form action={actionWithVariant}>
-      <SubmitButton type={type} disabled={item.quantity === 1} />
+      <SubmitButton type={type} disabled={type === 'minus' && item.quantity === 1} />
       <p aria-live="polite" className="sr-only" role="status">
         {message}
       </p>
