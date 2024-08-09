@@ -95,13 +95,31 @@ export async function bigCommerceFetch<T>({
   query,
   variables,
   headers,
-  cache = 'force-cache'
+  cache = 'force-cache',
+  next
 }: {
   query: string;
   variables?: ExtractVariables<T>;
   headers?: HeadersInit;
   cache?: RequestCache;
+  next?: {
+    revalidate?: number;
+    tags?: string[];
+  };
 }): Promise<{ status: number; body: T } | never> {
+  let cacheable: {
+    cache?: RequestCache;
+    next?: {
+      revalidate?: number;
+      tags?: string[];
+    };
+  } = {};
+
+  if (next) {
+    cacheable.next = next;
+  } else {
+    cacheable.cache = cache;
+  }
   try {
     const result = await fetch(endpoint, {
       method: 'POST',
@@ -115,7 +133,7 @@ export async function bigCommerceFetch<T>({
         ...(query && { query }),
         ...(variables && { variables })
       }),
-      cache
+      ...cacheable
     });
 
     const body = await result.json();
@@ -146,7 +164,10 @@ export async function bigCommerceFetch<T>({
 
 const getCategoryEntityIdbyHandle = async (handle: string) => {
   const resp = await bigCommerceFetch<BigCommerceMenuOperation>({
-    query: getMenuQuery
+    query: getMenuQuery,
+    next: {
+      tags: ['plp']
+    }
   });
   const recursiveFindCollectionId = (list: BigCommerceCategoryTreeItem[], slug: string): number => {
     const collectionId = list
@@ -181,7 +202,9 @@ const getBigCommerceProductsWithCheckout = async (
     variables: {
       entityIds: productIds
     },
-    cache: 'no-store'
+    next: {
+      tags: ['plp']
+    }
   });
   const bigCommerceProductList = bigCommerceProductListRes.body.data.site.products.edges.map(
     (product) => product.node
@@ -204,7 +227,9 @@ const getBigCommerceProductsWithCheckout = async (
     variables: {
       entityId: cartId
     },
-    cache: 'no-store'
+    next: {
+      tags: ['plp']
+    }
   });
   const checkout = resCheckout.body.data.site.checkout ?? {
     subtotal: {
@@ -422,6 +447,9 @@ export async function getCollection(handle: string): Promise<VercelCollection> {
     query: getCategoryQuery,
     variables: {
       entityId
+    },
+    next: {
+      tags: ['plp']
     }
   });
 
@@ -452,7 +480,9 @@ export async function getCollectionProducts({
       variables: {
         first: parseInt(pageSize)
       },
-      cache: 'no-cache'
+      next: {
+        tags: ['plp']
+      }
     });
 
     if (!res.body.data.site.newestProducts) {
@@ -474,7 +504,9 @@ export async function getCollectionProducts({
       variables: {
         first: parseInt(pageSize)
       },
-      cache: 'no-cache'
+      next: {
+        tags: ['plp']
+      }
     });
 
     if (!res.body.data.site.featuredProducts) {
@@ -501,7 +533,9 @@ export async function getCollectionProducts({
       hideOutOfStock: false,
       sortBy: sortBy === 'RELEVANCE' ? 'DEFAULT' : sortBy
     },
-    cache: 'no-cache'
+    next: {
+      tags: ['plp']
+    }
   });
 
   if (!res.body.data.site.category) {
@@ -523,6 +557,9 @@ export async function getCollections(): Promise<VercelCollection[]> {
         query: getCategoryQuery,
         variables: {
           entityId
+        },
+        next: {
+          tags: ['plp']
         }
       });
       return bigCommerceToVercelCollection(res.body.data.site.category);
@@ -640,6 +677,9 @@ export async function getProduct(handle: string): Promise<VercelProduct | undefi
     query: getProductQuery,
     variables: {
       productId: parseInt(handle, 10)
+    },
+    next: {
+      tags: ['plp']
     }
   });
   return bigCommerceToVercelProduct({ node: res.body.data.site.product, cursor: '' });
@@ -663,6 +703,9 @@ export async function getProductIdBySlug(path: string): Promise<
     query: getEntityIdByRouteQuery,
     variables: {
       path
+    },
+    next: {
+      tags: ['plp']
     }
   });
 
@@ -674,6 +717,9 @@ export async function getProductRecommendations(productId: string): Promise<Verc
     query: getProductsRecommedationsQuery,
     variables: {
       productId: productId
+    },
+    next: {
+      tags: ['plp']
     }
   });
 
@@ -726,6 +772,9 @@ export async function getbigCommerceFiltersList({
         productAttributes: productAttributes,
         brandEntityIds: brandEntityIds
       }
+    },
+    next: {
+      tags: ['plp']
     }
   });
   const filterResult = bigCommerceProductFilter.body.data.site.search.searchProducts.filters.edges;
@@ -792,6 +841,9 @@ export async function getCategoryProducts(
       sort,
       first: parseInt(pageSize) * parsedFirst,
       after
+    },
+    next: {
+      tags: ['plp']
     }
   });
 
@@ -830,6 +882,9 @@ export async function getProducts({
         searchTerm: query || ''
       },
       sort
+    },
+    next: {
+      tags: ['plp']
     }
   });
 
