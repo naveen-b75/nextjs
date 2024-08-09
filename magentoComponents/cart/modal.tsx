@@ -42,7 +42,7 @@ export default function CartModal({
       setUpdateCart(false);
     };
     cartId && updateCart && cartFunction(cartId);
-  }, [updateCart]);
+  }, [updateCart,cartId]);
 
   useEffect(() => {
     // Open cart modal when quantity changes.
