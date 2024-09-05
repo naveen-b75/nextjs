@@ -31,6 +31,11 @@ export type VercelCollection = {
   seo: VercelSEO;
   updatedAt: string;
   path: string;
+  breadcrumbs: Array<{
+    entityId: number;
+    name: string;
+    path: string;
+  }>;
 };
 
 type VercelMoney = {
@@ -507,6 +512,15 @@ export type BigCommerceCollection = {
   path: string;
   description: string;
   seo: BigCommerceSEO;
+  breadcrumbs: {
+    edges: Array<{
+      node: {
+        name: string;
+        path: string;
+        entityId: number;
+      };
+    }>;
+  };
 };
 
 export type BigCommerceCart = {
@@ -840,4 +854,12 @@ export type Node = {
       cursor: string;
     }>;
   };
+};
+
+export type BreadcrumbsProps = {
+  collection: Array<{
+    entityId: number;
+    name: string;
+    path: string;
+  }>;
 };
