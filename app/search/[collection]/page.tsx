@@ -1,8 +1,9 @@
-import { getbigCommerceFiltersList, getCategoryProducts, getCollection } from 'lib/bigcommerce';
-import { getCollectionProducts, getResolverData } from 'lib/magento';
-
+import { default as BigCommerceBreadCrumbs } from 'bigCommerceComponents/category/breadcrumbs';
 import Plp from 'bigCommerceComponents/layout/plp';
+import { getbigCommerceFiltersList, getCategoryProducts, getCollection } from 'lib/bigcommerce';
 import { defaultSort, sorting } from 'lib/constants';
+import { getBreadcumbsList, getCollectionProducts, getResolverData } from 'lib/magento';
+import { default as MagentoBreadcrumbs } from 'magentoComponents/Breadcrumbs';
 import MagentoProductGallery from 'magentoComponents/productGallery';
 import { notFound } from 'next/navigation';
 // export const runtime = 'edge';
@@ -42,7 +43,7 @@ export default async function CategoryPage({
   if (platformType?.toLocaleLowerCase() === 'magento') {
     const completeUrl = params.collection;
     const pageResolverData = await getResolverData(completeUrl);
-    const pageSize = 24;
+    const pageSize = 12;
     const transformSearchParams = () => {
       const transformedParams: any = {};
       for (const key in searchParams) {
@@ -105,18 +106,35 @@ export default async function CategoryPage({
           );
     }
     const products = await getCollectionProducts({
-      currentPage: params?.page ? params.page : 1,
+      currentPage:1,
       sort: sendSort,
       collection: pageResolverData?.route?.uid!,
-      pageSize,
+      pageSize: pageSize * params?.page ? params.page : 1,
       filters: transformedFilters
     });
+    const breadcrumb = await getBreadcumbsList(pageResolverData?.route?.id!);
+    const currentCategory = (breadcrumb?.data && breadcrumb?.data.category.name) || '';
+    const currentCategoryPath =
+      (breadcrumb?.data && `${breadcrumb?.data.category.url_path}`) || '#';
     return (
       <section>
+        <MagentoBreadcrumbs
+          currentCategory={currentCategory}
+          currentCategoryPath={currentCategoryPath}
+          breadcrumb={breadcrumb?.data}
+        />
         {products?.items?.length === 0 ? (
           <p className="py-3 text-lg">{`No products found in this collection`}</p>
         ) : (
-          <MagentoProductGallery products={products} searchParams={searchParams} />
+          <MagentoProductGallery
+            transformedFilters={transformedFilters}
+            pageSize={pageSize || 12}
+            collection={pageResolverData?.route?.uid || ''}
+            sort={sendSort}
+            currentPage={params?.page ? params?.page?.toString() : '1'}
+            products={products}
+            searchParams={searchParams}
+          />
         )}
       </section>
     );
@@ -166,8 +184,11 @@ export default async function CategoryPage({
     ]);
     const filters: Node[] = JSON.parse(JSON.stringify(filtersLists));
     const pageSize = process.env.PLP_PAGE_SIZE;
+    const breadcrumbs = collection?.breadcrumbs ?? [];
+
     return (
       <section>
+        <BigCommerceBreadCrumbs collection={breadcrumbs} />
         {filteredProducts?.productList?.length === 0 ? (
           <p className="py-3 text-lg">{`No products found in this collection`}</p>
         ) : (
@@ -181,6 +202,7 @@ export default async function CategoryPage({
             reverse={reverse}
             selectedCheckboxes={selectedCheckboxes}
             pageSize={pageSize || '6'}
+            endCursor={filteredProducts?.endCursor}
           />
         )}
       </section>
