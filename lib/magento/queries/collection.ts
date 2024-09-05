@@ -15,6 +15,21 @@ query getCategoryAvailableSortMethods(
 }
 `;
 
+export const getBreadcrumbs = `
+query getBreadcrumbs($category_id: Int!){
+ category(id: $category_id) {
+    breadcrumbs {
+      category_id
+      category_level
+      category_name
+      category_url_path
+    }
+    id
+    name
+    url_path
+  }
+}`;
+
 const collectionFragment = /* GraphQL */ `
   fragment collection on Collection {
     handle
