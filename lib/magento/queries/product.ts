@@ -143,8 +143,10 @@ export const getProductQuery = /* GraphQL */ `
     __typename
     categories {
       uid
+      id
       breadcrumbs {
         category_uid
+        category_id
         __typename
       }
       __typename
