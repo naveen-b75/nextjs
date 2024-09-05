@@ -110,6 +110,21 @@ const productFragment = /* GraphQL */ `
     brand {
       name
     }
+    categories {
+      edges {
+        node {
+          breadcrumbs(depth: 4) {
+            edges {
+              node {
+                entityId
+                path
+                name
+              }
+            }
+          }
+        }
+      }
+    }
     plainTextDescription
     description
     availabilityV2 {
