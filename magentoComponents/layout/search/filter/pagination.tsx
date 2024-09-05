@@ -9,7 +9,7 @@ const Pagination = ({
   TotalProducts: number;
 }) => {
   const pagesCount = Math.ceil(TotalProducts / 8); // 100/10
-  const currentPage = searchParams['page'];
+  const currentPage = searchParams['page']; 
   const router = useRouter();
   if (pagesCount === 1) return null;
   const pages = Array.from({ length: pagesCount }, (_, i) => i + 1);
