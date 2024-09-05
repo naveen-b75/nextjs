@@ -3,7 +3,6 @@ import Grid from 'bigCommerceComponents/grid';
 import FilterSidebar from 'bigCommerceComponents/layout/filter';
 import ProductGridItems from 'bigCommerceComponents/layout/product-grid-items';
 import FilterList from 'bigCommerceComponents/layout/search/filter';
-import Button from 'elements/Button';
 import { sorting } from 'lib/constants';
 import { createUrl } from 'lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -21,11 +20,13 @@ interface PlpProps {
   page: string;
   pageSize: string;
   reverse: boolean;
+  endCursor?: string;
 }
 
 const Plp: React.FC<PlpProps> = ({
   filters,
   pageSize,
+  endCursor,
   filteredProducts,
   products,
   categoryTitle,
@@ -48,7 +49,15 @@ const Plp: React.FC<PlpProps> = ({
   const productsData = useMemo(() => {
     return (
       <Grid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <ProductGridItems products={filteredProducts?.productList!} />
+        <ProductGridItems
+          length={filteredProducts?.totalItems}
+          reverse={reverse}
+          selectedCheckboxes={selectedCheckboxes}
+          endCursor={endCursor}
+          sortKey={sortKey}
+          collection={collection}
+          products={filteredProducts?.productList!}
+        />
       </Grid>
     );
   }, [productList, isLoading, filteredProducts]);
@@ -107,21 +116,6 @@ const Plp: React.FC<PlpProps> = ({
             itemsPerPage={parseInt(pageSize)}
             totalItems={filteredProducts?.totalItems}
           /> */}
-          <Button
-            type="button"
-            priority="primary"
-            size="large"
-            disabled={false}
-            onClick={() => {
-              handlePageChange(currentPage + 1);
-            }}
-            classes={{
-              root: '!bg-lightBlack !text-white',
-              content: '!text-white'
-            }}
-          >
-            Load More
-          </Button>
         </div>
       </div>
     </div>
