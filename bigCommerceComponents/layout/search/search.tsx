@@ -1,8 +1,8 @@
 'use client';
+import Grid from 'bigCommerceComponents/grid';
 import FilterSidebar from 'bigCommerceComponents/layout/filter';
 import ProductGridItems from 'bigCommerceComponents/layout/product-grid-items';
 import FilterList from 'bigCommerceComponents/layout/search/filter';
-import Pagination from 'bigCommerceComponents/pagination';
 import { sorting } from 'lib/constants';
 import { createUrl } from 'lib/utils';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -14,12 +14,18 @@ export default function Search({
   searchValue,
   filters,
   pageSize,
-  page
+  page,
+  reverse,
+  selectedCheckboxes,
+  sortKey
 }: {
   products: any;
+  reverse: boolean;
+  sortKey: string;
   filters: any;
   searchValue: any;
   pageSize: string;
+  selectedCheckboxes: any;
   page: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -92,16 +98,18 @@ export default function Search({
         </div>
         <div className="relative">
           {products?.productList?.length > 0 ? (
-            <ProductGridItems products={products?.productList} />
+            <Grid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <ProductGridItems
+                reverse={reverse}
+                selectedCheckboxes={selectedCheckboxes}
+                products={products?.productList}
+                length={products?.totalItems}
+                endCursor={products?.endCursor}
+                sortKey={sortKey}
+                searchValue={searchValue}
+              />
+            </Grid>
           ) : null}
-        </div>
-        <div>
-          <Pagination
-            currentPage={currentPage}
-            onPageChange={handlePageChange}
-            itemsPerPage={parseInt(pageSize)}
-            totalItems={products?.productList?.length}
-          />
         </div>
       </div>
     </div>
