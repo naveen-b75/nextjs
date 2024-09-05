@@ -28,6 +28,7 @@ import {
 } from './queries/checkout';
 
 import {
+  getBreadcrumbs,
   getCollectionProductsQuery,
   getCollectionQuery,
   getProductFiltersByCategoryQuery,
@@ -61,6 +62,7 @@ import {
   Connection,
   Image,
   MagentoAddToCartOperation,
+  MagentoBreadcrumbsOperation,
   MagentoCartApplyCoupen,
   MagentoCartGetRegionOperations,
   MagentoCartOP,
@@ -332,7 +334,7 @@ export async function removeFromCart(
     variables: {
       cartId,
       lineIds
-    },
+    }
   });
   return reshapeCart(res.body.data.cartLinesRemove.cart);
 }
@@ -344,7 +346,7 @@ export async function removeFromCartProxy(cartId: string, lineIds: string) {
       body: JSON.stringify({
         cartId: cartId,
         lineIds: lineIds
-      }),
+      })
     });
     const shippingData = await response.json();
     return shippingData;
@@ -362,7 +364,7 @@ export async function updateCart(
     variables: {
       cartId,
       lines
-    },
+    }
   });
   return reshapeCart(res.body.data.updateCartItems.cart);
 }
@@ -377,7 +379,7 @@ export async function updateCartProxy(
       body: JSON.stringify({
         cartId: cartId,
         lines: lines
-      }),
+      })
     });
     const shippingData = await response.json();
     return shippingData;
@@ -418,7 +420,7 @@ export async function getCartProxy(cartId: string) {
       method: 'POST',
       body: JSON.stringify({
         cartId: cartId
-      }),
+      })
     });
     const shippingData = await response.json();
     return shippingData;
@@ -446,7 +448,7 @@ export async function getAvailableShippingMethodsProxy(
       body: JSON.stringify({
         cartId: cartId,
         address: address
-      }),
+      })
     });
     const shippingData = await response.json();
     return shippingData;
@@ -490,7 +492,7 @@ export async function setShippingMethodsProxy(
       body: JSON.stringify({
         cartId: cartId,
         shippingMethod: shippingMethod
-      }),
+      })
     });
     const shippingData = await response.json();
     return shippingData;
@@ -506,7 +508,7 @@ export async function setShippingMethods(
   const response = await magentoFetch<MagentoCartQuery>({
     query: setShippingMethodMutation,
     variables: { cartId, shippingMethod },
-    tags: [TAGS.cart],
+    tags: [TAGS.cart]
   });
 
   return response;
@@ -531,7 +533,7 @@ export async function getCheckoutDetailsProxy(
       method: 'POST',
       body: JSON.stringify({
         cartId: cartId
-      }),
+      })
     });
     const couponCodeData = await response.json();
     return couponCodeData;
@@ -547,7 +549,7 @@ export async function setCouponToCartProxy(cartId: string, couponCode: string) {
       body: JSON.stringify({
         cartId: cartId,
         couponCode: couponCode
-      }),
+      })
     });
     const couponCodeData = await response.json();
     return couponCodeData;
@@ -563,7 +565,7 @@ export async function setCouponToCart(
   const response = await magentoFetch<MagentoCartApplyCoupen>({
     query: setCouponToCartMutation,
     variables: { cartId, couponCode },
-    tags: [TAGS.cart],
+    tags: [TAGS.cart]
   });
   return response.body.data.applyCouponToCart;
 }
@@ -574,7 +576,7 @@ export async function removeCouponToCartProxy(cartId: string) {
       method: 'POST',
       body: JSON.stringify({
         cartId: cartId
-      }),
+      })
     });
     const removecouponCodeData = await response.json();
     return removecouponCodeData;
@@ -587,7 +589,7 @@ export async function removeCouponToCart(cartId: string): Promise<MagentoCartOP 
   const response = await magentoFetch<MagentoCartApplyCoupen>({
     query: removeCouponFromCartMutation,
     variables: { cartId },
-    tags: [TAGS.cart],
+    tags: [TAGS.cart]
   });
   return response.body.data.removeCouponFromCart;
 }
@@ -729,7 +731,7 @@ export async function setBillingAddressProxy(
         country_code: address.country_code,
         postcode: address.postcode,
         region: address.region
-      }),
+      })
     });
     const billingData = await response.json();
     return billingData;
@@ -833,7 +835,7 @@ export async function setReviewsDataProxy(reviewsData: {
         ratings: reviewsData.ratings,
         summary: reviewsData.summary,
         text: reviewsData.text
-      }),
+      })
     });
     const reviewData = await response.json();
     return reviewData;
@@ -1037,6 +1039,38 @@ export async function getCollectionProducts({
   return reshapeProducts(res.body.data.products);
 }
 
+export async function getCollectionProductsProxy({
+  collection,
+  filters,
+  pageSize,
+  currentPage,
+  sort
+}: {
+  collection: string;
+  filters?: any;
+  pageSize?: number;
+  currentPage?: number;
+  sort?: { name?: string; position?: string };
+}) {
+  try {
+    const response = await fetch(`/api/magento/category`, {
+      method: 'POST',
+      body: JSON.stringify({
+        collection: collection,
+        filters: filters,
+        pageSize: pageSize,
+        currentPage: currentPage,
+        sort: sort
+      })
+    });
+    const autocompleteData = await response.json();
+    return autocompleteData;
+  } catch (e) {
+    console.error('error = ', e);
+    return e;
+  }
+}
+
 export async function getCollections(): Promise<Collection[]> {
   /*const res = await magentoFetch<MagentoCollectionsOperation>({
       query: getCollectionsQuery,
@@ -1094,7 +1128,7 @@ export async function getHomePageHtml(handle: string): Promise<MagentoPageCmsBlo
     },
     variables: {
       identifier: handle
-    },
+    }
   });
   return response.body;
 }
@@ -1239,7 +1273,7 @@ export async function getAutocompleteProductsProxy(inputText: string) {
       method: 'POST',
       body: JSON.stringify({
         inputText: inputText
-      }),
+      })
     });
     const autocompleteData = await response.json();
     return autocompleteData;
@@ -1265,6 +1299,19 @@ export async function getAutocompleteProducts(inputText: String): Promise<any> {
   return magentoToVercelAutocompleteData(res.body.data.products);
   // return reshapeProducts(res.body.data.products.items);
   //return magentoToVercelProducts(res.body.data.products.items);
+}
+
+export async function getBreadcumbsList(categoryId: number) {
+  const res = await magentoFetch<MagentoBreadcrumbsOperation>({
+    query: getBreadcrumbs,
+    next: {
+      tags: ['plp']
+    },
+    variables: {
+      category_id: categoryId
+    }
+  });
+  return res?.body;
 }
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.
 export async function revalidate(req: NextRequest): Promise<NextResponse> {
