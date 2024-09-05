@@ -126,6 +126,20 @@ const bigCommerceToVercelProduct = (product: {
         product?.node?.variants.edges.map((item) => item.cursor)
       )
     : [];
+  const breadcrumbs =
+    product?.node?.categories?.edges &&
+    product?.node?.categories?.edges[0] &&
+    product?.node?.categories?.edges[0]?.node?.breadcrumbs.edges.map((edge) => {
+      const node = edge?.node;
+      const pathSegments = node?.path?.split('/'); // Split the path into an array
+      const lastPath = pathSegments[pathSegments?.length - 2]; // Get the second-to-last element
+      const parentPath = pathSegments[pathSegments?.length - 3];
+      return {
+        name: node?.name,
+        path: `/search/${lastPath}`
+        // path: parentPath ? `/search/${parentPath}/${lastPath}` : `/search/${lastPath}`
+      };
+    });
   return {
     id: product?.node?.id.toString(),
     sku: product?.node?.sku,
@@ -135,6 +149,7 @@ const bigCommerceToVercelProduct = (product: {
       amount: product?.node?.prices?.basePrice?.value.toString(),
       currencyCode: product?.node?.prices?.basePrice?.currencyCode
     },
+    breadcrumbs: breadcrumbs,
     handle: product?.node?.path,
     defaultColor: defaultColor || null,
     availableForSale: product?.node?.availabilityV2.status === 'Available' ? true : false,
@@ -437,9 +452,23 @@ const bigCommerceToVercelCollection = (collection: BigCommerceCollection): Verce
         description: ''
       },
       updatedAt: '',
-      path: ''
+      path: '',
+      breadcrumbs: []
     };
   }
+
+  const breadcrumbs = collection.breadcrumbs.edges.map((edge) => {
+    const node = edge.node;
+    const pathSegments = node.path.split('/'); // Split the path into an array
+    const lastPath = pathSegments[pathSegments.length - 2]; // Get the second-to-last element
+    const parentPath = pathSegments[pathSegments?.length - 3];
+    return {
+      entityId: node.entityId,
+      name: node.name,
+      path: `/search/${lastPath}`
+      // path: parentPath ? `/search/${parentPath}/${lastPath}` : `/search/${lastPath}`,
+    };
+  });
 
   return {
     handle: collection.entityId.toString() || collection.name,
@@ -450,7 +479,8 @@ const bigCommerceToVercelCollection = (collection: BigCommerceCollection): Verce
       description: collection.seo.metaDescription
     },
     updatedAt: new Date().toISOString(),
-    path: `/search${collection.path}`
+    path: `/search${collection.path}`,
+    breadcrumbs: breadcrumbs
   };
 };
 
