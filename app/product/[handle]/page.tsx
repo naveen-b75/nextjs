@@ -1,7 +1,9 @@
+import { default as BigcommerceProductBreadcrumbs } from 'bigCommerceComponents/category/prductBreadcrumbs';
 import { Gallery as BigcommerceGallery } from 'bigCommerceComponents/product/gallery';
 import { ProductDescription as BigcommerceDescription } from 'bigCommerceComponents/product/product-description';
 import { getProduct as bigCommerceGetProduct } from 'lib/bigcommerce';
-import { getProduct, getReviewsMetaData } from 'lib/magento';
+import { getBreadcumbsList, getProduct, getReviewsMetaData } from 'lib/magento';
+import { default as MagentoBreadcrumbs } from 'magentoComponents/Breadcrumbs';
 import { default as MagentoReviewForm } from 'magentoComponents/product/ReviewForm';
 import { Gallery as MagentoGallery } from 'magentoComponents/product/gallery';
 import { ProductDescription as MagentoProductDescription } from 'magentoComponents/product/product-description';
@@ -29,8 +31,43 @@ export default async function ProductPage({ params }: { params: { handle: string
     const product = await getProduct(params.handle);
     const reviewsmetadata = await getReviewsMetaData();
     if (!product) return notFound();
+    const getBreadcrumbCategoryId = (
+      categories: {
+        uid: string;
+        id: number;
+        breadcrumbs: { category_uid: string; category_id: number }[];
+      }[]
+    ) => {
+      // Exit if there are no categories for this product.
+      if (!categories || !categories.length) {
+        return;
+      }
+      const breadcrumbSet = new Set();
+      categories.forEach(({ breadcrumbs }) => {
+        // breadcrumbs can be `null`...
+        (breadcrumbs || []).forEach(({ category_id }) => breadcrumbSet.add(category_id));
+      });
+
+      // Until we can get the single canonical breadcrumb path to a product we
+      // will just return the first category id of the potential leaf categories.
+      const leafCategory = categories.find((category) => !breadcrumbSet.has(category.id));
+
+      // If we couldn't find a leaf category then just use the first category
+      // in the list for this product.
+      return leafCategory?.id || categories[0]?.id;
+    };
+    const breadcrumb = await getBreadcumbsList(getBreadcrumbCategoryId(product?.categories)!);
+    const currentCategory = (breadcrumb?.data && breadcrumb?.data.category.name) || '';
+    const currentCategoryPath =
+      (breadcrumb?.data && `${breadcrumb?.data.category.url_path}`) || '#';
     return (
       <>
+      <MagentoBreadcrumbs
+          currentCategory={currentCategory}
+          currentCategoryPath={currentCategoryPath}
+          breadcrumb={breadcrumb?.data}
+          productName={product.name}
+        />
         <div className="mx-auto max-w-screen-2xl px-4">
           <div className="flex flex-col p-8 md:p-12 lg:flex-row lg:gap-8 dark:border-neutral-800 dark:bg-black">
             <div className="h-full w-full basis-full lg:basis-3/6">
@@ -56,6 +93,12 @@ export default async function ProductPage({ params }: { params: { handle: string
     return (
       <>
         <div className="mx-auto max-w-screen-2xl px-4">
+          <div className="mx-auto max-w-[1440px] lg:pl-[40px] lg:pr-[40px] xl:gap-[78px] xl:pl-[73px]">
+            <BigcommerceProductBreadcrumbs
+              collection={product?.breadcrumbs!}
+              productName={product?.title}
+            />
+          </div>
           <div className="flex flex-col bg-white p-8 md:p-12 lg:flex-row lg:gap-8 dark:border-neutral-800 dark:bg-black">
             <div className="h-full w-full basis-full lg:basis-3/6">
               <BigcommerceGallery
