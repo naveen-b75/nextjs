@@ -183,16 +183,16 @@ const FilterBlock = ({ appliedParams, filterData, setIsLoading }: FilterBlockPro
           filter.options.map((option) => (
             <div className="my-[10px]" key={option.value}>
               <label htmlFor={`${filter.type}_${option.value}`}>
-                <input
-                  type="checkbox"
-                  id={`${filter.type}_${option.value}`}
-                  checked={selectedCheckboxes.includes(`${filter.type},${option.value}`)}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleCheckboxChangeInternal(option.value, e.target.checked, filter.type)
-                  }
-                  className="mr-[5px]"
-                />
-                <Link href={handleFilterUrlCreation(option.value,filter.type)}>
+                <Link href={handleFilterUrlCreation(option.value, filter.type)}>
+                  <input
+                    type="checkbox"
+                    id={`${filter.type}_${option.value}`}
+                    checked={selectedCheckboxes.includes(`${filter.type},${option.value}`)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleCheckboxChangeInternal(option.value, e.target.checked, filter.type)
+                    }
+                    className="mr-[5px]"
+                  />
                   {option.label === '1'
                     ? 'Yes'
                     : option.label === '0'
