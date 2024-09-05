@@ -865,6 +865,44 @@ export async function getCategoryProducts(
   };
 }
 
+export async function getFilteredProductsProxy({
+  query,
+  reverse,
+  sortKey,
+  collection,
+  filter,
+  first,
+  after = ''
+}: {
+  collection?: string;
+  query?: string;
+  reverse?: boolean;
+  sortKey?: string;
+  filter?: { [key: string]: string[] };
+  first: string | number;
+  after: string;
+}) {
+  try {
+    const response = await fetch(`/api/category/products`, {
+      method: 'POST',
+      body: JSON.stringify({
+        collection: collection,
+        query: query,
+        reverse: reverse,
+        sortKey: sortKey,
+        filter: filter,
+        first: first,
+        after: after
+      }),
+      cache: 'no-cache'
+    });
+    const data = await response.json();
+    return data;
+  } catch (e) {
+    return e;
+  }
+}
+
 export async function getProducts({
   query,
   reverse,
@@ -898,4 +936,133 @@ export async function getProducts({
 // eslint-disable-next-line no-unused-vars
 export async function revalidate(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+export async function getFiltersList({
+  collection,
+  parent,
+  filter,
+  query
+}: {
+  collection?: string;
+  parent?: string;
+  query?: string;
+  filter?: { [key: string]: string[] };
+}) {
+  const entityId = collection && (await getCategoryEntityIdbyHandle(collection));
+
+  //getting product attributes by filtering the filter data
+  const productAttributes = Object.entries(filter || {})
+    .filter(([attribute]) => attribute !== 'Brand')
+    .map(([attribute, values]) => ({
+      attribute,
+      values
+    }));
+
+  // Getting the brand attributes
+  const brandAttributes = filter ? getBrandAttributes(filter) : undefined;
+
+  const brandEntityIds = brandAttributes?.Brand?.map(Number);
+
+  const bigCommerceProductFilter = await bigCommerceFetch<BigCommerceProductsFilter>({
+    query: getFilters,
+    variables: {
+      filters: {
+        searchTerm: query || '',
+        categoryEntityId: entityId ? entityId : null,
+        productAttributes: productAttributes,
+        brandEntityIds: brandEntityIds
+      }
+    },
+    next: {
+      tags: ['plp']
+    }
+  });
+  const filterResult = bigCommerceProductFilter.body.data.site.search.searchProducts.filters.edges;
+  return filterResult;
+}
+
+export async function getFilteredProducts(
+  {
+    query,
+    reverse,
+    sortKey,
+    collection,
+    parent,
+    filter,
+    first,
+    after = ''
+  }: {
+    collection?: string;
+    parent?: string;
+    query?: string;
+    reverse?: boolean;
+    sortKey?: string;
+    filter?: { [key: string]: string[] };
+    first: string | number;
+    after?: string;
+  },
+  previousProductList: VercelProduct[] = []
+): Promise<ProductListResult> {
+  const sort = vercelToBigCommerceSorting(reverse ?? false, sortKey);
+  const entityId = collection && (await getCategoryEntityIdbyHandle(collection));
+
+  // Convert 'first' to a number
+  const parsedFirst = typeof first === 'string' ? parseInt(first, 10) : first;
+
+  // Get the product attributes other than Brand
+  const productAttributes = Object.entries(filter || {})
+    .filter(([attribute]) => attribute !== 'Brand')
+    .map(([attribute, values]) => ({
+      attribute,
+      values
+    }));
+
+  // Get the brand attributes
+  const brandAttributes = filter ? getBrandAttributes(filter) : undefined;
+  const brandEntityIds = brandAttributes?.Brand?.map(Number); // Assuming the brand IDs are numbers, adjust if they are not
+  let filters: any = {};
+  if (query) {
+    filters.searchTerm = query;
+  }
+  if (entityId) {
+    filters.categoryEntityId = entityId;
+  }
+
+  if (productAttributes.length) {
+    filters.productAttributes = productAttributes;
+  }
+
+  if (brandEntityIds) {
+    filters.brandEntityIds = brandEntityIds;
+  }
+
+  const res = await bigCommerceFetch<BigCommerceSearchProductsOperation>({
+    query: searchProductsQuery,
+    variables: {
+      filters,
+      sort,
+      first: 12 * parsedFirst,
+      after
+    },
+    next: {
+      tags: ['plp']
+    }
+  });
+
+  const productList = res.body.data.site.search.searchProducts.products.edges.map((item) => ({
+    node: item.node,
+    cursor: item.cursor
+  }));
+  const totalItems = res.body.data.site.search.searchProducts.products.collectionInfo.totalItems;
+  const endCursor = res.body.data.site.search.searchProducts.products.pageInfo.endCursor;
+  const startCursor = res.body.data.site.search.searchProducts.products.pageInfo.startCursor;
+
+  const listOfItems = bigCommerceToVercelProducts(productList);
+  return {
+    startCursor,
+    endCursor,
+    totalItems,
+    productList: listOfItems
+  };
 }
