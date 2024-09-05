@@ -22,6 +22,8 @@ export default async function SearchPage({
 }: {
   searchParams?: { [key: string]: string | undefined };
 }) {
+  const { page } = searchParams || {};
+
   if (platformType?.toLocaleLowerCase() === 'magento') {
     const { q: searchValue } = searchParams as { [key: string]: string };
     //const products = await getProducts({ sortKey, reverse, query: searchValue });
@@ -39,7 +41,7 @@ export default async function SearchPage({
           return sorting;
         }, {});
     }
-
+    const pageSize = 12;
     const transformSearchParams = () => {
       const transformedParams: any = {};
       for (const key in searchParams) {
@@ -83,7 +85,7 @@ export default async function SearchPage({
     const productsData = await getProducts({
       search: searchValue || '',
       filter: transformedFilters,
-      pageSize: 12,
+      pageSize: pageSize * parseInt(page || '1'),
       currentPage: 1,
       sort: sendSort
     });
@@ -96,7 +98,15 @@ export default async function SearchPage({
           <span className="font-bold">&quot;{searchValue}&quot;</span>
         </p>
         {products.length > 0 ? (
-          <MagentoProductGallery products={productsData} searchParams={searchParams} />
+          <MagentoProductGallery
+            transformedFilters={transformedFilters}
+            pageSize={12}
+            searchValue={searchValue}
+            sort={sendSort}
+            currentPage={'1'}
+            products={productsData}
+            searchParams={searchParams}
+          />
         ) : (
           <p className="mb-4">There are no products that match.</p>
         )}
@@ -146,7 +156,7 @@ export default async function SearchPage({
     const filtersLists = await filtersRequest(selectedCheckboxes);
     const filters: Node[] = JSON.parse(JSON.stringify(filtersLists));
     const { page } = searchParams as { [key: string]: string };
-    const pageSize = process.env.PLP_PAGE_SIZE;
+    const pageSize = process.env.PLP_PAGE_SIZE || '6';
 
     return (
       <>
@@ -161,9 +171,12 @@ export default async function SearchPage({
         {filteredProducts?.productList?.length > 0 ? (
           <Search
             page={page || '1'}
+            reverse={reverse}
+            selectedCheckboxes={selectedCheckboxes}
             filters={filters}
             products={filteredProducts}
             searchValue={searchValue}
+            sortKey={sortKey}
             pageSize={pageSize || '6'}
           />
         ) : null}
