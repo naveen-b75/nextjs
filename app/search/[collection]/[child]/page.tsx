@@ -1,4 +1,5 @@
-import { getCollectionProducts, getResolverData } from 'lib/magento';
+import { getBreadcumbsList, getCollectionProducts, getResolverData } from 'lib/magento';
+import { default as MagentoBreadcrumbs } from 'magentoComponents/Breadcrumbs';
 import MagentoProductGallery from 'magentoComponents/productGallery';
 import { notFound } from 'next/navigation';
 
@@ -39,7 +40,6 @@ export default async function CategoryPage({
 
     const pageResolverData = await getResolverData(completeUrl);
     const pageSize = 12;
-
     const transformSearchParams = () => {
       const transformedParams: any = {};
       for (const key in searchParams) {
@@ -103,21 +103,38 @@ export default async function CategoryPage({
     }
 
     const productsData = await getCollectionProducts({
-      currentPage: parseInt(page || '1'),
+      currentPage: 1,
       sort: sendSort,
       collection: pageResolverData?.route?.uid || '',
-      pageSize,
+      pageSize: pageSize * parseInt(page || '1'),
       filters: transformedFilters
     });
+    const breadcrumb = await getBreadcumbsList(pageResolverData?.route?.id!);
+    const currentCategory = (breadcrumb?.data && breadcrumb?.data.category.name) || '';
+    const currentCategoryPath =
+      (breadcrumb?.data && `${breadcrumb?.data.category.url_path}`) || '#';
     const products = productsData.items;
     return (
       <section>
+        <MagentoBreadcrumbs
+          currentCategory={currentCategory}
+          currentCategoryPath={currentCategoryPath}
+          breadcrumb={breadcrumb?.data}
+        />
         {products?.length === 0 ? (
           <ul>
             <p className="py-3 text-lg">No products found in this collection</p>
           </ul>
         ) : (
-          <MagentoProductGallery products={productsData} searchParams={searchParams} />
+          <MagentoProductGallery
+            transformedFilters={transformedFilters}
+            pageSize={pageSize || 12}
+            collection={pageResolverData?.route?.uid || ''}
+            sort={sendSort}
+            currentPage={page || '1'}
+            products={productsData}
+            searchParams={searchParams}
+          />
         )}
       </section>
     );
