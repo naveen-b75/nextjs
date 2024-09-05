@@ -60,6 +60,7 @@ export type Resolver = {
   type?: string;
   route?: {
     uid: string;
+    id: number;
   };
   uid?: string;
 };
@@ -550,6 +551,7 @@ export type MagentoResolverOperation = {
       redirect_code: string;
       type: string;
       uid: string;
+      id: number;
     };
   };
   variables: {
@@ -619,6 +621,24 @@ export type MagentoProductsOperation = {
   };
 };
 
+export type MagentoBreadcrumbsOperation = {
+  data: {
+    category: {
+      id: number;
+      name: string;
+      url_path: string;
+      breadcrumbs: {
+        category_id: number;
+        category_level: number;
+        category_name: string;
+        category_url_path: string;
+      }[];
+    };
+  };
+  variables: {
+    category_id: number;
+  };
+};
 export type MagentoShippingMethod = {
   id: string;
   email?: string;
@@ -767,6 +787,11 @@ export type MagentoProductsList = {
   id: string;
   __typename: string;
   productId?: string;
+  categories: {
+    uid: string;
+    id: number;
+    breadcrumbs: { category_uid: string; category_id: number }[];
+  }[];
   sku: string;
   name: string;
   plainTextDescription: string;
@@ -832,6 +857,11 @@ export type MagentoVercelProduct = {
   type: string;
   handle: string;
   name: string;
+  categories: {
+    uid: string;
+    id: number;
+    breadcrumbs: { category_uid: string; category_id: number }[];
+  }[];
   plainTextDescription: string;
   short_description: string;
   configurable_options: any;
