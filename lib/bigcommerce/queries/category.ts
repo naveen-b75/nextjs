@@ -11,6 +11,15 @@ export const getCategoryQuery = /* GraphQL */ `
           metaKeywords
           pageTitle
         }
+        breadcrumbs(depth: 4) {
+          edges {
+            node {
+              entityId
+              name
+              path
+            }
+          }
+        }
       }
     }
   }
