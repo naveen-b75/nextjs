@@ -63,9 +63,11 @@ const vercelFromMagentoLineItems = (lineItems: MagentoCart['items']) => {
 // };
 
 const magentoToVercelProduct = (product: MagentoProductsList): MagentoVercelProduct => {
+  console.log(JSON.stringify(product?.categories))
   return {
     id: product.id.toString(),
     name: product.name,
+    categories:product?.categories,
     type: product.__typename,
     configurable_options: '',
     plainTextDescription: product.plainTextDescription,
@@ -111,13 +113,12 @@ const magentoToVercelProduct = (product: MagentoProductsList): MagentoVercelProd
     },
     rating_summary: product.rating_summary,
     review_count: product.review_count,
-    reviewsList: product.reviews
+    reviewsList: product.reviews,
   };
 };
 
 const magentoToVercelProducts = (products: MagentoProductsList[]) => {
   const reshapedProducts = [];
-
   for (const product of products) {
     if (product) {
       const reshapedProduct = magentoToVercelProduct(product);
@@ -134,6 +135,7 @@ const magentoToVercelAutocomplete = (product: MagentoProductsList): MagentoVerce
   return {
     id: product.id.toString(),
     type: product.__typename,
+    categories:product.categories,
     name: product.name,
     plainTextDescription: product.plainTextDescription,
     url_key: product.url_key,
